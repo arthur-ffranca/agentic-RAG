@@ -1,0 +1,12 @@
+Empresa:
+A TechHouse vende automacao residencial para casas e apartamentos.
+
+Suporte:
+O suporte funciona de segunda a sexta, das 8h as 18h.
+
+Planos:
+O plano Starter custa R$ 79 por mes.
+O plano Pro custa R$ 149 por mes.
+
+Cancelamento:
+Clientes podem cancelar a assinatura a qualquer momento.

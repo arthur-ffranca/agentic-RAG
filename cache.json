@@ -1,0 +1,35 @@
+{
+  "resumo": "A TechHouse é uma empresa que oferece soluções de automação residencial para casas e apartamentos. Oferece planos de assinatura mensal com diferentes faixas de preço e permite o cancelamento a qualquer momento. O suporte ao cliente funciona em horário comercial, de segunda a sexta-feira.",
+  "temas": [
+    "automação residencial",
+    "planos de assinatura",
+    "suporte ao cliente",
+    "cancelamento de assinatura"
+  ],
+  "fatos": [
+    "A TechHouse comercializa automação residencial para casas e apartamentos.",
+    "O suporte ao cliente está disponível de segunda a sexta-feira, das 8h às 18h.",
+    "O plano Starter tem o valor de R$ 79 por mês.",
+    "O plano Pro tem o valor de R$ 149 por mês.",
+    "Os clientes podem cancelar a assinatura a qualquer momento, sem restrições de prazo."
+  ],
+  "perguntas_respostas": [
+    {
+      "pergunta": "Quais planos a TechHouse oferece e quanto custam?",
+      "resposta": "A TechHouse oferece dois planos: o Starter, por R$ 79 por mês, e o Pro, por R$ 149 por mês."
+    },
+    {
+      "pergunta": "Qual o horário de funcionamento do suporte da TechHouse?",
+      "resposta": "O suporte funciona de segunda a sexta-feira, das 8h às 18h."
+    },
+    {
+      "pergunta": "É possível cancelar a assinatura a qualquer momento?",
+      "resposta": "Sim, os clientes podem cancelar a assinatura a qualquer momento, sem necessidade de cumprir prazo mínimo."
+    }
+  ],
+  "_metadata": {
+    "source": "knowledge.txt",
+    "model": "sabiazinho-4",
+    "generated_at": "2026-07-08T01:53:24.715874+00:00"
+  }
+}

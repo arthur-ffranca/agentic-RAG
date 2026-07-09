@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maritaca Hybrid Graph Agentic RAG</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #060908;
+        --panel: #0c1210;
+        --panel-2: #101a16;
+        --line: #26332d;
+        --text: #f4fbf7;
+        --muted: #9eaea6;
+        --green: #45f06d;
+        --green-soft: rgba(69, 240, 109, 0.14);
+        --orange: #ffb547;
+        --orange-soft: rgba(255, 181, 71, 0.15);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 78% 10%, rgba(69, 240, 109, 0.08), transparent 28rem),
+          linear-gradient(180deg, #070b09 0%, #030504 100%);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 48px 0;
+      }
+
+      .hero {
+        display: grid;
+        gap: 22px;
+        padding-bottom: 34px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .eyebrow {
+        color: var(--green);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 900px;
+        margin: 0;
+        font-size: clamp(2.3rem, 6vw, 5.3rem);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .tagline {
+        max-width: 760px;
+        margin: 0;
+        color: var(--muted);
+        font-size: clamp(1.05rem, 2vw, 1.35rem);
+        line-height: 1.55;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      a.button,
+      button {
+        border: 1px solid rgba(69, 240, 109, 0.45);
+        border-radius: 8px;
+        background: var(--green-soft);
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        font-weight: 800;
+        padding: 12px 16px;
+        text-decoration: none;
+      }
+
+      button.secondary,
+      a.secondary {
+        border-color: var(--line);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) 360px;
+        gap: 18px;
+        margin-top: 24px;
+      }
+
+      section {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(12, 18, 16, 0.86);
+      }
+
+      .graph {
+        padding: 18px;
+        min-height: 620px;
+        overflow: hidden;
+      }
+
+      .side {
+        display: grid;
+        gap: 18px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 1rem;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+        padding: 12px;
+      }
+
+      .metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.76rem;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 5px;
+        color: var(--green);
+      }
+
+      .trace {
+        display: grid;
+        gap: 9px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .trace li {
+        display: grid;
+        grid-template-columns: 26px 1fr;
+        gap: 10px;
+        align-items: start;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .trace .num {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .trace li.done {
+        color: var(--text);
+      }
+
+      .trace li.done .num {
+        border-color: rgba(69, 240, 109, 0.75);
+        color: var(--green);
+        box-shadow: 0 0 18px rgba(69, 240, 109, 0.22);
+      }
+
+      .mermaid {
+        min-width: 740px;
+      }
+
+      .footer {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 980px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .graph {
+          overflow-x: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="hero">
+        <div class="eyebrow">100% BR AI engineering demo</div>
+        <h1>Maritaca Hybrid Graph Agentic RAG</h1>
+        <p class="tagline">
+          Built with Brazilian LLMs, for Brazilian AI engineering. A value-aware
+          agentic graph that plans retrieval, runs CAG and RAG in parallel, checks
+          sufficiency, and generates grounded answers.
+        </p>
+        <div class="actions">
+          <button id="run">Replay Route</button>
+          <button class="secondary" id="reset">Reset Flow</button>
+          <a class="button secondary" href="https://github.com/arthur-ffranca/agentic-RAG">GitHub Repo</a>
+        </div>
+      </div>
+
+      <div class="layout">
+        <section class="graph">
+          <pre class="mermaid" id="diagram">
+flowchart TD
+  user_query["User Query"]:::idle --> planner["Planner Agent<br/>Maritaca / Sabiazinho-4"]:::idle
+  planner --> executor["Parallel Graph Executor"]:::idle
+  executor --> cag_memory["CAG Memory<br/>cache.json"]:::idle
+  executor --> rag_memory["RAG Memory<br/>ChromaDB"]:::idle
+  cag_memory --> aggregator["Context Aggregator<br/>Merge + Source Labels"]:::idle
+  rag_memory --> aggregator
+  aggregator --> judge["Judge Agent<br/>Sufficiency Check"]:::idle
+  judge --> final_answer["Final Answer Agent<br/>Grounded Answer"]:::idle
+  final_answer --> final_response["Final Response"]:::idle
+  judge -.-> retry_context["Retry Context<br/>Missing Info"]:::inactive
+  retry_context -.-> loop_planner["Loop to Planner<br/>Max retries = 3"]:::inactive
+  loop_planner -.-> planner
+
+  classDef idle fill:#101a16,stroke:#506158,color:#f4fbf7,stroke-width:1px;
+  classDef active fill:#172314,stroke:#45f06d,color:#f4fbf7,stroke-width:3px;
+  classDef running fill:#271c0a,stroke:#ffb547,color:#f4fbf7,stroke-width:3px;
+  classDef inactive fill:#080b0a,stroke:#26332d,color:#66746d,stroke-width:1px;
+          </pre>
+        </section>
+
+        <div class="side">
+          <section class="panel">
+            <h2>Model Comparison</h2>
+            <div class="metrics">
+              <div class="metric"><span>Planner</span><strong>Maritaca</strong></div>
+              <div class="metric"><span>Judge</span><strong>Sabiazinho-4</strong></div>
+              <div class="metric"><span>Latency</span><strong id="latency">-</strong></div>
+              <div class="metric"><span>Status</span><strong id="status">IDLE</strong></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Execution Trace</h2>
+            <ol class="trace" id="trace"></ol>
+          </section>
+
+          <section class="panel">
+            <h2>Final Answer</h2>
+            <p class="footer" id="answer">
+              Run the route to see the grounded answer demo.
+            </p>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "dark",
+        flowchart: { curve: "basis", htmlLabels: true },
+        themeVariables: {
+          background: "#060908",
+          primaryColor: "#101a16",
+          primaryTextColor: "#f4fbf7",
+          primaryBorderColor: "#506158",
+          lineColor: "#506158",
+          fontFamily: "Inter, ui-sans-serif, system-ui"
+        }
+      });
+
+      const steps = [
+        ["user_query", "User Query received"],
+        ["planner", "Planner selected CAG + RAG"],
+        ["executor", "Parallel Graph Executor started"],
+        ["cag_memory", "CAG Memory retrieved cached records"],
+        ["rag_memory", "RAG Memory retrieved evidence chunks"],
+        ["aggregator", "Context Aggregator merged sources"],
+        ["judge", "Judge Agent passed sufficiency check"],
+        ["final_answer", "Final Answer Agent generated grounded answer"],
+        ["final_response", "Final Response completed"]
+      ];
+
+      const trace = document.querySelector("#trace");
+      const status = document.querySelector("#status");
+      const latency = document.querySelector("#latency");
+      const answer = document.querySelector("#answer");
+
+      function setTrace(activeCount) {
+        trace.innerHTML = steps
+          .map(([, message], index) => {
+            const done = index < activeCount ? "done" : "";
+            return `<li class="${done}"><span class="num">${index + 1}</span><span>${message}</span></li>`;
+          })
+          .join("");
+      }
+
+      function setNodeClass(id, className) {
+        const node = document.querySelector(`[id$="-${id}-0"] rect, [id$="-${id}-0"] polygon`);
+        if (!node) return;
+        const colors = {
+          active: ["#172314", "#45f06d", "0 0 20px rgba(69,240,109,.45)"],
+          running: ["#271c0a", "#ffb547", "0 0 20px rgba(255,181,71,.5)"],
+          idle: ["#101a16", "#506158", "none"],
+          inactive: ["#080b0a", "#26332d", "none"]
+        };
+        const [fill, stroke, filter] = colors[className];
+        node.setAttribute("fill", fill);
+        node.setAttribute("stroke", stroke);
+        node.style.filter = filter;
+      }
+
+      function reset() {
+        steps.forEach(([id]) => setNodeClass(id, "idle"));
+        ["retry_context", "loop_planner"].forEach((id) => setNodeClass(id, "inactive"));
+        setTrace(0);
+        status.textContent = "IDLE";
+        latency.textContent = "-";
+        answer.textContent = "Run the route to see the grounded answer demo.";
+      }
+
+      async function run() {
+        reset();
+        status.textContent = "RUNNING";
+        for (let i = 0; i < steps.length; i++) {
+          const [id] = steps[i];
+          setNodeClass(id, "running");
+          setTrace(i);
+          await new Promise((resolve) => setTimeout(resolve, 520));
+          setNodeClass(id, "active");
+          setTrace(i + 1);
+        }
+        status.textContent = "SUCCESS";
+        latency.textContent = "1.84s";
+        answer.textContent =
+          "O suporte da TechHouse funciona de segunda a sexta-feira, das 8h as 18h.";
+      }
+
+      document.querySelector("#run").addEventListener("click", run);
+      document.querySelector("#reset").addEventListener("click", reset);
+      setTrace(0);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+openai
+python-dotenv
+pydantic
+langchain-chroma
+langchain-huggingface
+sentence-transformers
+prometheus-client
