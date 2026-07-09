@@ -8,15 +8,19 @@ from mcp.server.fastmcp import FastMCP
 
 import os
 import requests
+import time
 
 
 PROJECT_DIR = Path(__file__).resolve().parent
 load_dotenv(dotenv_path=PROJECT_DIR / ".env")
 
 ACEDATA_VEO_API_URL = "https://api.acedata.cloud/veo/videos"
+ACEDATA_VEO_TASKS_URL = "https://api.acedata.cloud/veo/tasks"
 DEFAULT_OUTPUT_DIR = PROJECT_DIR / "creative_video" / "output"
 
 VeoAction = Literal["text2video", "image2video"]
+VeoModel = Literal["veo2", "veo2-fast", "veo3", "veo3-fast", "veo31", "veo31-fast"]
+AspectRatio = Literal["16:9", "9:16", "4:3", "3:4", "1:1"]
 
 mcp = FastMCP("veo-creative-video-mcp")
 
@@ -63,33 +67,70 @@ def _find_video_url(data: Any) -> str | None:
     return None
 
 
+def _task_is_complete(data: dict[str, Any]) -> bool:
+    if _find_video_url(data):
+        return True
+
+    response = data.get("response")
+    if isinstance(response, dict) and _find_video_url(response):
+        return True
+
+    text = str(data).lower()
+    return any(state in text for state in ("succeeded", "completed", "failed", "error"))
+
+
 def _download_file(url: str, output_path: Path) -> None:
     response = requests.get(url, timeout=180)
     response.raise_for_status()
     output_path.write_bytes(response.content)
 
 
+def _get_task(task_id: str, output_path: str | None = None) -> dict[str, Any]:
+    response = requests.post(
+        ACEDATA_VEO_TASKS_URL,
+        json={"action": "retrieve", "id": task_id},
+        headers=_headers(),
+        timeout=60,
+    )
+    response.raise_for_status()
+    data = response.json()
+
+    video_url = _find_video_url(data)
+    if video_url:
+        target = _safe_output_path(output_path, f"{task_id}.mp4")
+        _download_file(video_url, target)
+        data["local_path"] = str(target.resolve())
+
+    return data
+
+
 def _generate_video(
     prompt: str,
     action: VeoAction = "text2video",
     output_path: str | None = None,
-    image_url: str | None = None,
+    image_urls: list[str] | None = None,
+    model: VeoModel = "veo2-fast",
+    aspect_ratio: AspectRatio = "16:9",
     timeout_seconds: int = 900,
+    poll_interval_seconds: int = 20,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "action": action,
+        "model": model,
         "prompt": prompt,
+        "aspect_ratio": aspect_ratio,
+        "async": True,
     }
 
-    if image_url:
-        payload["image_url"] = image_url
+    if image_urls:
+        payload["image_urls"] = image_urls
 
     try:
         response = requests.post(
             ACEDATA_VEO_API_URL,
             json=payload,
             headers=_headers(),
-            timeout=timeout_seconds,
+            timeout=min(timeout_seconds, 180),
         )
         response.raise_for_status()
     except requests.Timeout:
@@ -112,6 +153,37 @@ def _generate_video(
         }
 
     data = response.json()
+    task_id = data.get("task_id")
+
+    if task_id and not _find_video_url(data):
+        deadline = time.time() + timeout_seconds
+        last_task_result: dict[str, Any] = data
+
+        while time.time() < deadline:
+            task_response = requests.post(
+                ACEDATA_VEO_TASKS_URL,
+                json={"action": "retrieve", "id": task_id},
+                headers=_headers(),
+                timeout=60,
+            )
+            task_response.raise_for_status()
+            last_task_result = task_response.json()
+
+            if _task_is_complete(last_task_result):
+                data = last_task_result
+                break
+
+            time.sleep(poll_interval_seconds)
+        else:
+            return {
+                "success": False,
+                "task_id": task_id,
+                "error": {
+                    "code": "timeout",
+                    "message": f"Veo task did not complete within {timeout_seconds} seconds.",
+                },
+                "last_response": last_task_result,
+            }
 
     video_url = _find_video_url(data)
     if video_url:
@@ -122,10 +194,40 @@ def _generate_video(
     return data
 
 
+def _submit_video_task(
+    prompt: str,
+    action: VeoAction = "text2video",
+    image_urls: list[str] | None = None,
+    model: VeoModel = "veo2-fast",
+    aspect_ratio: AspectRatio = "16:9",
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "action": action,
+        "model": model,
+        "prompt": prompt,
+        "aspect_ratio": aspect_ratio,
+        "async": True,
+    }
+
+    if image_urls:
+        payload["image_urls"] = image_urls
+
+    response = requests.post(
+        ACEDATA_VEO_API_URL,
+        json=payload,
+        headers=_headers(),
+        timeout=180,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 @mcp.tool()
 def generate_video_from_prompt(
     prompt: str,
     output_path: str | None = "creative_video/output/veo-demo.mp4",
+    model: VeoModel = "veo2-fast",
+    aspect_ratio: AspectRatio = "16:9",
     timeout_seconds: int = 900,
 ) -> dict[str, Any]:
     """Gera um video com Veo a partir de texto e baixa o MP4 quando a API retornar URL."""
@@ -133,13 +235,40 @@ def generate_video_from_prompt(
         prompt=prompt,
         action="text2video",
         output_path=output_path,
+        model=model,
+        aspect_ratio=aspect_ratio,
         timeout_seconds=timeout_seconds,
     )
 
 
 @mcp.tool()
+def submit_video_task(
+    prompt: str,
+    model: VeoModel = "veo2-fast",
+    aspect_ratio: AspectRatio = "16:9",
+) -> dict[str, Any]:
+    """Submete uma task assíncrona do Veo e retorna task_id sem aguardar o vídeo."""
+    return _submit_video_task(
+        prompt=prompt,
+        action="text2video",
+        model=model,
+        aspect_ratio=aspect_ratio,
+    )
+
+
+@mcp.tool()
+def get_video_task(
+    task_id: str,
+    output_path: str | None = None,
+) -> dict[str, Any]:
+    """Consulta uma task do Veo e baixa o MP4 quando o video estiver pronto."""
+    return _get_task(task_id=task_id, output_path=output_path)
+
+
+@mcp.tool()
 def generate_project_demo_clip(
     output_path: str = "creative_video/output/maritaca-agentic-rag-demo.mp4",
+    model: VeoModel = "veo2-fast",
     timeout_seconds: int = 900,
 ) -> dict[str, Any]:
     """Gera um clipe chamativo para o Maritaca Hybrid Graph Agentic RAG."""
@@ -155,6 +284,8 @@ def generate_project_demo_clip(
         prompt=prompt,
         action="text2video",
         output_path=output_path,
+        model=model,
+        aspect_ratio="16:9",
         timeout_seconds=timeout_seconds,
     )
 
@@ -164,14 +295,18 @@ def generate_video_from_image(
     prompt: str,
     image_url: str,
     output_path: str | None = "creative_video/output/veo-image-demo.mp4",
+    model: VeoModel = "veo2-fast",
+    aspect_ratio: AspectRatio = "16:9",
     timeout_seconds: int = 900,
 ) -> dict[str, Any]:
     """Gera video com Veo usando uma imagem de referencia por URL."""
     return _generate_video(
         prompt=prompt,
         action="image2video",
-        image_url=image_url,
+        image_urls=[image_url],
         output_path=output_path,
+        model=model,
+        aspect_ratio=aspect_ratio,
         timeout_seconds=timeout_seconds,
     )
 
