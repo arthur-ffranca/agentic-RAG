@@ -179,6 +179,31 @@
         color: var(--green);
       }
 
+      .price-table {
+        width: 100%;
+        margin-top: 14px;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
+
+      .price-table th,
+      .price-table td {
+        border-top: 1px solid var(--line);
+        padding: 9px 7px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .price-table th {
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+      }
+
+      .price-table strong {
+        color: var(--green);
+      }
+
       .trace {
         display: grid;
         gap: 9px;
@@ -276,6 +301,32 @@
               <div class="metric"><span>Latency</span><strong id="latency">-</strong></div>
               <div class="metric"><span>Status</span><strong id="status">IDLE</strong></div>
             </div>
+            <table class="price-table">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Input / 1M</th>
+                  <th>Output / 1M</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>sabiazinho-4</strong><br />router / judge</td>
+                  <td>R$ 1.00</td>
+                  <td>R$ 4.00</td>
+                </tr>
+                <tr>
+                  <td><strong>sabia-4</strong><br />final answer</td>
+                  <td>R$ 5.00</td>
+                  <td>R$ 20.00</td>
+                </tr>
+                <tr>
+                  <td><strong>sabia-4-thinking</strong><br />hard reasoning</td>
+                  <td>R$ 5.00</td>
+                  <td>R$ 40.00</td>
+                </tr>
+              </tbody>
+            </table>
           </section>
 
           <section class="panel">
