@@ -697,10 +697,10 @@ flowchart TD
 
     aggregator --> judge["Judge Agent<br/><small>sufficiency check</small>"]
 
-    judge -->|"Enough"| final_answer["Final Answer Agent<br/><small>grounded answer</small>"]
+    judge --> final_answer["Final Answer Agent<br/><small>grounded answer</small>"]
     final_answer --> final_response["Final Response"]
 
-    judge -. "Not enough" .-> retry_context["Retry Context<br/><small>missing_info + updated query</small>"]
+    judge -.-> retry_context["Retry Context<br/><small>missing_info + updated query</small>"]
     retry_context -.-> loop_planner["Loop to Planner<br/><small>max retries = 3</small>"]
     loop_planner -.-> planner
 
@@ -725,9 +725,9 @@ ${classLine("retry")}
     linkStyle 6 stroke:${edgeColor(edgeClass("aggregator->judge"))},stroke-width:${edgeWidth(edgeClass("aggregator->judge"))};
     linkStyle 7 stroke:${edgeColor(edgeClass("judge->final_answer"))},stroke-width:${edgeWidth(edgeClass("judge->final_answer"))};
     linkStyle 8 stroke:${edgeColor(edgeClass("final_answer->final_response"))},stroke-width:${edgeWidth(edgeClass("final_answer->final_response"))};
-    linkStyle 9 stroke:${edgeColor(edgeClass("judge->retry_context"))},stroke-width:${edgeWidth(edgeClass("judge->retry_context"))},stroke-dasharray: 6 6;
-    linkStyle 10 stroke:${edgeColor(edgeClass("retry_context->loop_planner"))},stroke-width:${edgeWidth(edgeClass("retry_context->loop_planner"))},stroke-dasharray: 6 6;
-    linkStyle 11 stroke:${edgeColor(edgeClass("loop_planner->planner"))},stroke-width:${edgeWidth(edgeClass("loop_planner->planner"))},stroke-dasharray: 6 6;
+    linkStyle 9 stroke:${edgeColor(edgeClass("judge->retry_context"))},stroke-width:${edgeWidth(edgeClass("judge->retry_context"))};
+    linkStyle 10 stroke:${edgeColor(edgeClass("retry_context->loop_planner"))},stroke-width:${edgeWidth(edgeClass("retry_context->loop_planner"))};
+    linkStyle 11 stroke:${edgeColor(edgeClass("loop_planner->planner"))},stroke-width:${edgeWidth(edgeClass("loop_planner->planner"))};
 `;
     }
 
