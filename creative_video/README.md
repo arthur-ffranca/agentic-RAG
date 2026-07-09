@@ -58,3 +58,41 @@ generate_video_from_image
 
 Video generation can take several minutes. Use `timeout_seconds` when calling
 the tools if the request needs more time.
+
+## MuAPI + Seedance MCP
+
+Local MCP wrapper:
+
+```text
+mcp_muapi_server.py
+```
+
+Required environment variable in the project `.env`:
+
+```env
+MUAPI_API_KEY=your_key_here
+```
+
+The wrapper also accepts these fallback names for local experimentation:
+
+```text
+MUAPIAPP_API_KEY
+MUAI_API_KEY
+SEEDANCE_API_TOKEN
+```
+
+Final generated project video:
+
+```text
+creative_video/output/maritaca-hybrid-graph-agentic-rag-seedance.mp4
+```
+
+Generation details:
+
+```text
+provider: MuAPI
+model: seedance-2
+mode: image-to-video
+duration: 5 seconds
+cost: $1.25
+```

@@ -16,6 +16,22 @@ https://arthur-ffranca.github.io/agentic-RAG/
 
 The Pages demo is frontend-only. The full FastAPI dashboard runs locally because GitHub Pages does not host Python backends.
 
+## Cinematic Demo Video
+
+The project also includes an AI-generated portfolio video created from the project architecture image using MuAPI + Seedance through MCP:
+
+[creative_video/output/maritaca-hybrid-graph-agentic-rag-seedance.mp4](creative_video/output/maritaca-hybrid-graph-agentic-rag-seedance.mp4)
+
+Generation summary:
+
+```text
+provider: MuAPI
+model: seedance-2
+mode: image-to-video
+duration: 5 seconds
+cost: $1.25
+```
+
 ## Core Idea
 
 Traditional RAG usually follows a fixed path:
@@ -211,12 +227,14 @@ Create a `.env` file:
 
 ```env
 MARITACA_API_KEY=your_key_here
+MUAPI_API_KEY=your_muapi_key_here
 ```
 
 Install dependencies:
 
 ```bash
 pip install openai python-dotenv pydantic langchain-chroma langchain-huggingface sentence-transformers
+npm install -g muapi-cli
 ```
 
 Run the CAG builder:
