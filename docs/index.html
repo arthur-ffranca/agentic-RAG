@@ -78,6 +78,29 @@
         gap: 12px;
       }
 
+      .query-bar {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) auto;
+        gap: 12px;
+        max-width: 820px;
+      }
+
+      .query-bar input {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font: inherit;
+        padding: 12px 14px;
+      }
+
+      .query-bar input:focus {
+        border-color: rgba(69, 240, 109, 0.7);
+        box-shadow: 0 0 0 3px rgba(69, 240, 109, 0.12);
+        outline: none;
+      }
+
       a.button,
       button {
         border: 1px solid rgba(69, 240, 109, 0.45);
@@ -225,8 +248,15 @@
           agentic graph that plans retrieval, runs CAG and RAG in parallel, checks
           sufficiency, and generates grounded answers.
         </p>
+        <div class="query-bar">
+          <input
+            id="question"
+            value="Qual o horario de suporte da TechHouse?"
+            aria-label="Demo query"
+          />
+          <button id="run">Run Query</button>
+        </div>
         <div class="actions">
-          <button id="run">Replay Route</button>
           <button class="secondary" id="reset">Reset Flow</button>
           <a class="button secondary" href="https://github.com/arthur-ffranca/agentic-RAG">GitHub Repo</a>
         </div>
@@ -234,26 +264,7 @@
 
       <div class="layout">
         <section class="graph">
-          <pre class="mermaid" id="diagram">
-flowchart TD
-  user_query["User Query"]:::idle --> planner["Planner Agent<br/>Maritaca / Sabiazinho-4"]:::idle
-  planner --> executor["Parallel Graph Executor"]:::idle
-  executor --> cag_memory["CAG Memory<br/>cache.json"]:::idle
-  executor --> rag_memory["RAG Memory<br/>ChromaDB"]:::idle
-  cag_memory --> aggregator["Context Aggregator<br/>Merge + Source Labels"]:::idle
-  rag_memory --> aggregator
-  aggregator --> judge["Judge Agent<br/>Sufficiency Check"]:::idle
-  judge --> final_answer["Final Answer Agent<br/>Grounded Answer"]:::idle
-  final_answer --> final_response["Final Response"]:::idle
-  judge -.-> retry_context["Retry Context<br/>Missing Info"]:::inactive
-  retry_context -.-> loop_planner["Loop to Planner<br/>Max retries = 3"]:::inactive
-  loop_planner -.-> planner
-
-  classDef idle fill:#101a16,stroke:#506158,color:#f4fbf7,stroke-width:1px;
-  classDef active fill:#172314,stroke:#45f06d,color:#f4fbf7,stroke-width:3px;
-  classDef running fill:#271c0a,stroke:#ffb547,color:#f4fbf7,stroke-width:3px;
-  classDef inactive fill:#080b0a,stroke:#26332d,color:#66746d,stroke-width:1px;
-          </pre>
+          <div class="mermaid" id="diagram"></div>
         </section>
 
         <div class="side">
@@ -286,7 +297,7 @@ flowchart TD
       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 
       mermaid.initialize({
-        startOnLoad: true,
+        startOnLoad: false,
         theme: "dark",
         flowchart: { curve: "basis", htmlLabels: true },
         themeVariables: {
@@ -300,49 +311,130 @@ flowchart TD
       });
 
       const steps = [
-        ["user_query", "User Query received"],
-        ["planner", "Planner selected CAG + RAG"],
-        ["executor", "Parallel Graph Executor started"],
-        ["cag_memory", "CAG Memory retrieved cached records"],
-        ["rag_memory", "RAG Memory retrieved evidence chunks"],
-        ["aggregator", "Context Aggregator merged sources"],
-        ["judge", "Judge Agent passed sufficiency check"],
-        ["final_answer", "Final Answer Agent generated grounded answer"],
-        ["final_response", "Final Response completed"]
+        { node: "user_query", edges: [], message: "User Query received" },
+        { node: "planner", edges: [0], message: "Planner selected CAG + RAG" },
+        { node: "executor", edges: [1], message: "Parallel Graph Executor started" },
+        { node: "cag_memory", edges: [2], message: "CAG Memory retrieved cached records" },
+        { node: "rag_memory", edges: [3], message: "RAG Memory retrieved evidence chunks" },
+        { node: "aggregator", edges: [4, 5], message: "Context Aggregator merged sources" },
+        { node: "judge", edges: [6], message: "Judge Agent passed sufficiency check" },
+        { node: "final_answer", edges: [7], message: "Final Answer Agent generated grounded answer" },
+        { node: "final_response", edges: [8], message: "Final Response completed" }
+      ];
+
+      const nodeIds = [
+        "user_query",
+        "planner",
+        "executor",
+        "cag_memory",
+        "rag_memory",
+        "aggregator",
+        "judge",
+        "final_answer",
+        "final_response",
+        "retry_context",
+        "loop_planner"
       ];
 
       const trace = document.querySelector("#trace");
       const status = document.querySelector("#status");
       const latency = document.querySelector("#latency");
       const answer = document.querySelector("#answer");
+      const diagram = document.querySelector("#diagram");
+      const question = document.querySelector("#question");
+      let renderId = 0;
 
       function setTrace(activeCount) {
         trace.innerHTML = steps
-          .map(([, message], index) => {
+          .map(({ message }, index) => {
             const done = index < activeCount ? "done" : "";
             return `<li class="${done}"><span class="num">${index + 1}</span><span>${message}</span></li>`;
           })
           .join("");
       }
 
-      function setNodeClass(id, className) {
-        const node = document.querySelector(`[id$="-${id}-0"] rect, [id$="-${id}-0"] polygon`);
-        if (!node) return;
-        const colors = {
-          active: ["#172314", "#45f06d", "0 0 20px rgba(69,240,109,.45)"],
-          running: ["#271c0a", "#ffb547", "0 0 20px rgba(255,181,71,.5)"],
-          idle: ["#101a16", "#506158", "none"],
-          inactive: ["#080b0a", "#26332d", "none"]
-        };
-        const [fill, stroke, filter] = colors[className];
-        node.setAttribute("fill", fill);
-        node.setAttribute("stroke", stroke);
-        node.style.filter = filter;
+      function escapeHtml(value) {
+        return value.replace(/[&<>"']/g, (char) => {
+          const entities = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+          };
+          return entities[char];
+        });
       }
 
-      function reset() {
-        steps.forEach(([id]) => setNodeClass(id, "idle"));
-        ["retry_context", "loop_planner"].forEach((id) => setNodeClass(id, "inactive"));
+      function buildDiagram(activeCount, runningIndex = -1) {
+        const classes = Object.fromEntries(nodeIds.map((id) => [id, "idle"]));
+        classes.retry_context = "inactive";
+        classes.loop_planner = "inactive";
+
+        steps.slice(0, activeCount).forEach(({ node }) => {
+          classes[node] = "success";
+        });
+
+        if (runningIndex >= 0) {
+          classes[steps[runningIndex].node] = "running";
+        }
+
+        const activeEdges = new Set(
+          steps
+            .slice(0, activeCount)
+            .flatMap(({ edges }) => edges)
+        );
+        const runningEdges = new Set(runningIndex >= 0 ? steps[runningIndex].edges : []);
+
+        const classLines = nodeIds
+          .map((id) => `  class ${id} ${classes[id]};`)
+          .join("\n");
+
+        const linkLines = Array.from({ length: 12 }, (_, index) => {
+          if (runningEdges.has(index)) {
+            return `  linkStyle ${index} stroke:#ffb547,stroke-width:4px,color:#ffb547;`;
+          }
+          if (activeEdges.has(index)) {
+            return `  linkStyle ${index} stroke:#45f06d,stroke-width:4px,color:#45f06d;`;
+          }
+          if (index >= 9) {
+            return `  linkStyle ${index} stroke:#26332d,stroke-width:1px,color:#66746d,stroke-dasharray: 6 6;`;
+          }
+          return `  linkStyle ${index} stroke:#506158,stroke-width:1px,color:#506158;`;
+        }).join("\n");
+
+        return `
+flowchart TD
+  user_query["User Query"] --> planner["Planner Agent<br/>Maritaca / Sabiazinho-4"]
+  planner --> executor["Parallel Graph Executor"]
+  executor --> cag_memory["CAG Memory<br/>cache.json"]
+  executor --> rag_memory["RAG Memory<br/>ChromaDB"]
+  cag_memory --> aggregator["Context Aggregator<br/>Merge + Source Labels"]
+  rag_memory --> aggregator
+  aggregator --> judge["Judge Agent<br/>Sufficiency Check"]
+  judge --> final_answer["Final Answer Agent<br/>Grounded Answer"]
+  final_answer --> final_response["Final Response"]
+  judge -.-> retry_context["Retry Context<br/>Missing Info"]
+  retry_context -.-> loop_planner["Loop to Planner<br/>Max retries = 3"]
+  loop_planner -.-> planner
+
+  classDef idle fill:#101a16,stroke:#506158,color:#f4fbf7,stroke-width:1px;
+  classDef success fill:#172314,stroke:#45f06d,color:#f4fbf7,stroke-width:3px;
+  classDef running fill:#271c0a,stroke:#ffb547,color:#f4fbf7,stroke-width:3px;
+  classDef inactive fill:#080b0a,stroke:#26332d,color:#66746d,stroke-width:1px;
+${classLines}
+${linkLines}
+`;
+      }
+
+      async function renderFlow(activeCount, runningIndex = -1) {
+        const id = `agentic-flow-${++renderId}`;
+        const { svg } = await mermaid.render(id, buildDiagram(activeCount, runningIndex));
+        diagram.innerHTML = svg;
+      }
+
+      async function reset() {
+        await renderFlow(0);
         setTrace(0);
         status.textContent = "IDLE";
         latency.textContent = "-";
@@ -350,25 +442,28 @@ flowchart TD
       }
 
       async function run() {
-        reset();
+        document.querySelector("#run").disabled = true;
+        await reset();
         status.textContent = "RUNNING";
         for (let i = 0; i < steps.length; i++) {
-          const [id] = steps[i];
-          setNodeClass(id, "running");
+          await renderFlow(i, i);
           setTrace(i);
           await new Promise((resolve) => setTimeout(resolve, 520));
-          setNodeClass(id, "active");
+          await renderFlow(i + 1);
           setTrace(i + 1);
         }
         status.textContent = "SUCCESS";
         latency.textContent = "1.84s";
-        answer.textContent =
-          "O suporte da TechHouse funciona de segunda a sexta-feira, das 8h as 18h.";
+        answer.innerHTML = `<strong>Query:</strong> ${escapeHtml(question.value)}<br><br>O suporte da TechHouse funciona de segunda a sexta-feira, das 8h as 18h.`;
+        document.querySelector("#run").disabled = false;
       }
 
       document.querySelector("#run").addEventListener("click", run);
+      question.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") run();
+      });
       document.querySelector("#reset").addEventListener("click", reset);
-      setTrace(0);
+      await reset();
     </script>
   </body>
 </html>
