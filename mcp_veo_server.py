@@ -10,10 +10,11 @@ import os
 import requests
 
 
-load_dotenv()
+PROJECT_DIR = Path(__file__).resolve().parent
+load_dotenv(dotenv_path=PROJECT_DIR / ".env")
 
 ACEDATA_VEO_API_URL = "https://api.acedata.cloud/veo/videos"
-DEFAULT_OUTPUT_DIR = Path("creative_video/output")
+DEFAULT_OUTPUT_DIR = PROJECT_DIR / "creative_video" / "output"
 
 VeoAction = Literal["text2video", "image2video"]
 
@@ -36,6 +37,8 @@ def _headers() -> dict[str, str]:
 
 def _safe_output_path(output_path: str | None, fallback_name: str) -> Path:
     path = Path(output_path) if output_path else DEFAULT_OUTPUT_DIR / fallback_name
+    if not path.is_absolute():
+        path = PROJECT_DIR / path
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
