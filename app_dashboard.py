@@ -360,6 +360,19 @@ DASHBOARD_HTML = r"""
 
     th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; }
 
+    .model-price-table {
+      font-size: 13px;
+    }
+
+    .model-price-table td,
+    .model-price-table th {
+      padding: 8px;
+    }
+
+    .model-price-table strong {
+      color: var(--green);
+    }
+
     .flow-shell {
       display: grid;
       grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.8fr);
@@ -504,6 +517,40 @@ DASHBOARD_HTML = r"""
         <div class="button-row">
           <button class="secondary" onclick="replayMockTrace()">Replay Route</button>
           <button class="secondary" onclick="resetFlow()">Reset Flow</button>
+        </div>
+
+        <div class="section-gap">
+          <h3>Fixed Model Cost Table</h3>
+          <table class="model-price-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Input / 1M</th>
+                <th>Output / 1M</th>
+                <th>Use case</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>sabiazinho-4</strong></td>
+                <td>R$ 1.00</td>
+                <td>R$ 4.00</td>
+                <td>fast router, judge, cheap graph runs</td>
+              </tr>
+              <tr>
+                <td><strong>sabia-4</strong></td>
+                <td>R$ 5.00</td>
+                <td>R$ 20.00</td>
+                <td>better final answers and synthesis</td>
+              </tr>
+              <tr>
+                <td><strong>sabia-4-thinking</strong></td>
+                <td>R$ 5.00</td>
+                <td>R$ 40.00</td>
+                <td>harder reasoning, highest answer cost</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div class="section-gap">
