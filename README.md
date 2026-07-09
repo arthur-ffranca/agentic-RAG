@@ -6,6 +6,16 @@ Maritaca Hybrid Graph Agentic RAG is a value-aware hybrid Agentic RAG system tha
 
 The project is designed to show how an AI system can decide which memory source to use, execute selected retrieval tools in parallel, validate whether the retrieved context is sufficient, and only then generate a final answer.
 
+## Live Demo
+
+Static GitHub Pages demo:
+
+```text
+https://arthur-ffranca.github.io/agentic-RAG/
+```
+
+The Pages demo is frontend-only. The full FastAPI dashboard runs locally because GitHub Pages does not host Python backends.
+
 ## Core Idea
 
 Traditional RAG usually follows a fixed path:
